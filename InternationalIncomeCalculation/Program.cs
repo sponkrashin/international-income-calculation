@@ -20,7 +20,7 @@ var banksToReceivePayments = banksConfiguration
     .Where(x => x.CanReceiveInternationalPayments)
     .ToArray();
 
-foreach (var bank in banksConfiguration)
+foreach (var bank in banksToReceivePayments)
 {
     foreach (var tariff in bank.Tariffs)
     {
