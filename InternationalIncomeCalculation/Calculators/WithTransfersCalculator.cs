@@ -24,17 +24,16 @@ public class WithTransfersCalculator
         BankTariffConfiguration mainBankTariffConfiguration,
         params BankConfiguration[] banksToTransferConfigurations)
     {
-        var amountInMainBank = 0m;
-
         var bestResult = new CalculationResult
         {
             ReceivedAmount = 0,
             Parts = Array.Empty<CalculationResultPart>()
         };
 
+        var amountInMainBank = commonConfiguration.TotalIncome;
+
         do
         {
-            amountInMainBank = Math.Min(amountInMainBank + TransferCalculationStep, commonConfiguration.TotalIncome);
             var receivedInMainBank = this.simpleCalculator.Calculate(
                 amountInMainBank,
                 commonConfiguration,
@@ -59,7 +58,14 @@ public class WithTransfersCalculator
             {
                 bestResult = temporaryResult;
             }
-        } while (amountInMainBank < commonConfiguration.TotalIncome);
+
+            if (banksToTransferConfigurations.Length == 0 || amountInMainBank == 0)
+            {
+                break;
+            }
+
+            amountInMainBank = Math.Max(amountInMainBank - TransferCalculationStep, 0);
+        } while (true);
 
         return bestResult;
     }
@@ -80,17 +86,10 @@ public class WithTransfersCalculator
             return bestResult;
         }
 
-        var amountInRublesInFirstBank = 0m;
+        var amountInRublesInFirstBank = amountInRubles;
 
         do
         {
-            amountInRublesInFirstBank = Math.Min(amountInRublesInFirstBank + TransferCalculationStepInRubles, amountInRubles);
-
-            if (banksToTransferConfigurations.Length == 1)
-            {
-                amountInRublesInFirstBank = amountInRubles;
-            }
-
             var bestTransferToFirstBank = banksToTransferConfigurations[0].Tariffs
                 .Select(tariff => new
                 {
@@ -105,21 +104,26 @@ public class WithTransfersCalculator
                 mainBankTariffConfiguration,
                 banksToTransferConfigurations.Skip(1).ToArray());
 
-            var receivedInFirstBank = amountInRublesInFirstBank - bestTransferToFirstBank!.TotalFee - mainBankTariffConfiguration.PaymentOrderPrice;
+            var receivedInFirstBank = Math.Max(amountInRublesInFirstBank - bestTransferToFirstBank!.TotalFee - mainBankTariffConfiguration.PaymentOrderPrice, 0);
+
+            var firstBankResultParts = receivedInFirstBank != 0
+                ? new[]
+                {
+                    new CalculationResultPart
+                    {
+                        Bank = banksToTransferConfigurations[0],
+                        Tariff = bestTransferToFirstBank.Tariff,
+                        AmountToTransfer = amountInRublesInFirstBank,
+                        AmountToReceive = receivedInFirstBank
+                    }
+                }
+                : Array.Empty<CalculationResultPart>();
 
             var temporaryResult = new CalculationResult
             {
                 ReceivedAmount = receivedInFirstBank + bestTransferToOtherBanks.ReceivedAmount,
-                Parts = new[]
-                    {
-                        new CalculationResultPart
-                        {
-                            Bank = banksToTransferConfigurations[0],
-                            Tariff = bestTransferToFirstBank.Tariff,
-                            AmountToTransfer = amountInRublesInFirstBank,
-                            AmountToReceive = receivedInFirstBank
-                        }
-                    }
+                Parts = Array.Empty<CalculationResultPart>()
+                    .Union(firstBankResultParts)
                     .Union(bestTransferToOtherBanks.Parts)
                     .ToArray()
             };
@@ -128,7 +132,14 @@ public class WithTransfersCalculator
             {
                 bestResult = temporaryResult;
             }
-        } while (amountInRublesInFirstBank < amountInRubles);
+
+            if (banksToTransferConfigurations.Length == 1 || amountInRublesInFirstBank == 0)
+            {
+                break;
+            }
+
+            amountInRublesInFirstBank = Math.Max(amountInRublesInFirstBank - TransferCalculationStepInRubles, 0);
+        } while (true);
 
         return bestResult;
     }
