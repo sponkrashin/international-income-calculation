@@ -4,8 +4,8 @@ using InternationalIncomeCalculation.Configuration;
 
 public class WithTransfersCalculator
 {
-    private const decimal TransferCalculationStep = 100;
-    private const decimal TransferCalculationStepInRubles = 5000;
+    private const decimal TransferCalculationStep = 200;
+    private const decimal TransferCalculationStepInRubles = 10000;
 
     private readonly SimpleCalculator simpleCalculator;
     private readonly FeesCalculator feesCalculator;
