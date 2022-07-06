@@ -4,20 +4,20 @@ using InternationalIncomeCalculation.Configuration;
 
 public class FeesCalculator
 {
-    public decimal Calculate(IReadOnlyCollection<decimal> incomes, decimal amountInRubles, BankTariffConfiguration tariffConfiguration)
+    public decimal Calculate(IReadOnlyCollection<decimal> incomes, decimal exchangeRate, decimal amountInRubles, BankTariffConfiguration tariffConfiguration)
     {
         return
-            this.CalculateCurrencyControlFee(incomes, tariffConfiguration) +
+            this.CalculateCurrencyControlFee(incomes, exchangeRate, tariffConfiguration) +
             this.CalculateTransferFee(amountInRubles, tariffConfiguration) +
             this.CalculateMaintenanceFee(tariffConfiguration);
     }
 
     public decimal CalculateForIncomeInRubles(decimal amountInRubles, BankTariffConfiguration tariffConfiguration)
     {
-        return this.Calculate(Array.Empty<decimal>(), amountInRubles, tariffConfiguration);
+        return this.Calculate(Array.Empty<decimal>(), 0, amountInRubles, tariffConfiguration);
     }
 
-    private decimal CalculateCurrencyControlFee(IReadOnlyCollection<decimal> incomes, BankTariffConfiguration tariffConfiguration)
+    private decimal CalculateCurrencyControlFee(IReadOnlyCollection<decimal> incomes, decimal exchangeRate, BankTariffConfiguration tariffConfiguration)
     {
         var feeMin = tariffConfiguration.CurrencyControlFeeRange.Min;
         var feeMax = tariffConfiguration.CurrencyControlFeeRange.Max;
@@ -26,7 +26,7 @@ public class FeesCalculator
         var currencyControlFee = incomes
             .Select(x => feePercentage == null
                 ? 0
-                : Math.Min(Math.Max(x * feePercentage.Value / 100, feeMin), feeMax))
+                : Math.Min(Math.Max(x * feePercentage.Value / 100 * exchangeRate, feeMin), feeMax))
             .Sum();
 
         return currencyControlFee;

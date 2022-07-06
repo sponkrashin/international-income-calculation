@@ -29,15 +29,22 @@ public class SimpleCalculator
         BankConfiguration bankConfiguration,
         BankTariffConfiguration tariffConfiguration)
     {
-        var totalAmountInRubles = bankConfiguration.UseStockExchange
-            ? amount * commonConfiguration.StockExchangeRate * (1 - commonConfiguration.StockExchangeFeePercentage / 100)
-            : amount * tariffConfiguration.ExchangeRate;
+        var exchangeRate = bankConfiguration.UseStockExchange
+            ? commonConfiguration.StockExchangeRate * (1 - commonConfiguration.StockExchangeFeePercentage / 100)
+            : tariffConfiguration.ExchangeRate;
+
+        var totalAmountInRubles = amount * exchangeRate;
 
         var totalAmountInRublesForLimits = bankConfiguration.UseStockExchange
             ? commonConfiguration.TotalIncome * commonConfiguration.CentralBankExchangeRate
             : totalAmountInRubles;
 
-        var fees = this.feesCalculator.Calculate(commonConfiguration.Incomes, totalAmountInRublesForLimits, tariffConfiguration);
+        var fees = this.feesCalculator.Calculate(
+            commonConfiguration.Incomes,
+            exchangeRate,
+            totalAmountInRublesForLimits,
+            tariffConfiguration);
+
         return totalAmountInRubles - fees;
     }
 }
