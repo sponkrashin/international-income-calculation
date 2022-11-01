@@ -29,7 +29,7 @@ public class FeesCalculator
             {
                 if (feeFixPrice != null)
                 {
-                    return feeFixPrice.Value;
+                    return feeFixPrice.Value * (tariffConfiguration.CurrencyControlFixPriceInCurrency ? exchangeRate : 1);
                 }
 
                 return feePercentage == null
