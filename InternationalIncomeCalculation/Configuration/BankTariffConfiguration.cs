@@ -12,6 +12,10 @@ public class BankTariffConfiguration
 
     public decimal? CurrencyControlFeePercentagePrice { get; set; }
 
+    public decimal? CurrencyControlFixPrice { get; set; }
+
+    public bool CurrencyControlFixPriceInCurrency { get; set; }
+
     public decimal? CurrencyControlFeeMin { get; set; }
 
     public decimal? CurrencyControlFeeMax { get; set; }

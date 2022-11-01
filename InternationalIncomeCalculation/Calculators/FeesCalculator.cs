@@ -22,11 +22,20 @@ public class FeesCalculator
         var feeMin = tariffConfiguration.CurrencyControlFeeRange.Min;
         var feeMax = tariffConfiguration.CurrencyControlFeeRange.Max;
         var feePercentage = tariffConfiguration.CurrencyControlFeePercentagePrice;
+        var feeFixPrice = tariffConfiguration.CurrencyControlFixPrice;
 
         var currencyControlFee = incomes
-            .Select(x => feePercentage == null
-                ? 0
-                : Math.Min(Math.Max(x * feePercentage.Value / 100 * exchangeRate, feeMin), feeMax))
+            .Select(x =>
+            {
+                if (feeFixPrice != null)
+                {
+                    return feeFixPrice.Value * (tariffConfiguration.CurrencyControlFixPriceInCurrency ? exchangeRate : 1);
+                }
+
+                return feePercentage == null
+                    ? 0
+                    : Math.Min(Math.Max(x * feePercentage.Value / 100 * exchangeRate, feeMin), feeMax);
+            })
             .Sum();
 
         return currencyControlFee;
